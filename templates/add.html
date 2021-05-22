@@ -1,0 +1,10 @@
+<html lang="en">
+    <body>
+        <h1>Add Song To Queue</h1>
+        <form method="POST" action="/add">
+            {{ form.csrf_token }}
+            {{ form.uri.label }} {{ form.uri(size=20) }}
+            <input type="submit" value="Go">
+        </form>
+    </body>
+</html>
