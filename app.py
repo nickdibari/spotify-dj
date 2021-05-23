@@ -4,14 +4,33 @@ from datetime import datetime, timedelta
 
 from flask import Flask, redirect, render_template, request, url_for
 from flask_wtf.csrf import CSRFProtect
+from pythonjsonlogger.jsonlogger import JsonFormatter
 from spotify_client import Config, SpotifyClient
 
 import config
 from forms import AddSongToQueueForm
 
 
-logging.basicConfig(filename='app.log', level=logging.INFO)
+app_logger = logging.FileHandler(filename='app.log')
+json_formatter = JsonFormatter(fmt='%(levelname)s %(asctime)s %s(pathname)s %(lineno)s %(name)s %(message)s')
 
+spotify_logger_handler = app_logger
+spotify_logger_handler.setFormatter(json_formatter)
+
+app_logger_handler = app_logger
+app_logger_handler.setFormatter(json_formatter)
+
+spotify_logger = logging.getLogger('spotify_client')
+spotify_logger.setLevel(logging.INFO)
+spotify_logger.addHandler(spotify_logger_handler)
+
+app_logger = logging.getLogger('spotifydj')
+app_logger.setLevel(logging.INFO)
+app_logger.addHandler(app_logger_handler)
+
+csrf_logger = logging.getLogger('flask_wtf.csrf')
+csrf_logger.setLevel(logging.INFO)
+csrf_logger.addHandler(app_logger_handler)
 
 app = Flask(__name__)
 app.secret_key = config.APP_SECRET_KEY
