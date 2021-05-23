@@ -3,7 +3,7 @@ import json
 import secrets
 from datetime import datetime, timedelta
 
-from flask import Flask, redirect, render_template, Response, request, session, url_for
+from flask import Flask, flash, redirect, render_template, Response, request, session, url_for
 from flask_wtf.csrf import CSRFProtect
 from pythonjsonlogger.jsonlogger import JsonFormatter
 from spotify_client import Config, SpotifyClient
@@ -106,7 +106,9 @@ def add():
 
         spotify_client.add_track_to_user_queue(creds['access_token'], uri)
 
-        return render_template('add.html', form=AddSongToQueueForm(formdata=None))
+        flash('Added song to queue!')
+
+        return redirect(url_for('add'))
 
 
 if __name__ == '__main__':
