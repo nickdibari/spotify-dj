@@ -3,13 +3,12 @@ import json
 from datetime import datetime, timedelta
 
 from flask import Flask, redirect, render_template, request, url_for
-from flask_wtf import FlaskForm
 from flask_wtf.csrf import CSRFProtect
 from spotify_client import Config, SpotifyClient
-from wtforms import StringField
-from wtforms.validators import DataRequired
 
 import config
+from forms import AddSongToQueueForm
+
 
 logging.basicConfig(filename='app.log', level=logging.INFO)
 
@@ -21,10 +20,6 @@ csrf = CSRFProtect(app)
 
 Config.configure(config.SPOTIFY_CLIENT_ID, config.SPOTIFY_CLIENT_SECRET)
 spotify_client = SpotifyClient()
-
-
-class AddSongToQueueForm(FlaskForm):
-    uri = StringField('uri', validators=[DataRequired()])
 
 
 @app.route('/login')
