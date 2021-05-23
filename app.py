@@ -1,8 +1,9 @@
 import logging
 import json
+import secrets
 from datetime import datetime, timedelta
 
-from flask import Flask, redirect, render_template, request, url_for
+from flask import Flask, redirect, render_template, Response, request, session, url_for
 from flask_wtf.csrf import CSRFProtect
 from pythonjsonlogger.jsonlogger import JsonFormatter
 from spotify_client import Config, SpotifyClient
@@ -43,28 +44,38 @@ spotify_client = SpotifyClient()
 
 @app.route('/login')
 def login():
+    state = secrets.token_urlsafe(config.SPOTIFY_SESSION_STATE_LENGTH)
+
     spotify_oauth_link = spotify_client.build_spotify_oauth_confirm_link(
-        state='12345',
+        state=state,
         scopes=['user-modify-playback-state'],
         redirect_url=config.SPOTIFY_REDIRECT_URI
     )
+
+    session['state'] = state
 
     return render_template('login.html', spotify_oauth_link=spotify_oauth_link)
 
 
 @app.route('/auth')
 def auth():
-    code = request.args.get('code')
-    data = spotify_client.get_access_and_refresh_tokens(code, config.SPOTIFY_REDIRECT_URI)
+    request_state = request.args.get('state')
+    session_state = session.get('state')
 
-    data.update({
-        'last_refreshed': datetime.now().isoformat()
-    })
+    if session_state and secrets.compare_digest(request_state, session_state):
+        code = request.args.get('code')
+        data = spotify_client.get_access_and_refresh_tokens(code, config.SPOTIFY_REDIRECT_URI)
 
-    with open(config.SPOTIFY_CREDENTIALS_FILE, 'w') as fp:
-        json.dump(data, fp)
+        data.update({
+            'last_refreshed': datetime.now().isoformat()
+        })
 
-    return redirect(url_for('add'))
+        with open(config.SPOTIFY_CREDENTIALS_FILE, 'w') as fp:
+            json.dump(data, fp)
+
+        return redirect(url_for('add'))
+    else:
+        return Response('Invalid state parameter', status=400)
 
 
 @app.route('/add', methods=['GET', 'POST'])
