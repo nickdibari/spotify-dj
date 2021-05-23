@@ -7,6 +7,7 @@ from flask import Flask, flash, redirect, render_template, Response, request, se
 from flask_wtf.csrf import CSRFProtect
 from pythonjsonlogger.jsonlogger import JsonFormatter
 from spotify_client import Config, SpotifyClient
+from spotify_client.exceptions import SpotifyException
 
 import config
 from forms import AddSongToQueueForm
@@ -104,11 +105,14 @@ def add():
             with open(config.SPOTIFY_CREDENTIALS_FILE, 'w') as fp:
                 json.dump(creds, fp)
 
-        spotify_client.add_track_to_user_queue(creds['access_token'], uri)
+        try:
+            spotify_client.add_track_to_user_queue(creds['access_token'], uri)
 
-        flash('Added song to queue!')
-
-        return redirect(url_for('add'))
+            flash('Added song to queue!')
+            return redirect(url_for('add'))
+        except SpotifyException:
+            flash('Error adding song to queue! Please let the host know.')
+            return redirect(url_for('add'))
 
 
 if __name__ == '__main__':
