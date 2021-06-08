@@ -1,5 +1,4 @@
 import logging
-import json
 import secrets
 from datetime import datetime, timedelta
 
@@ -11,6 +10,7 @@ from spotify_client.exceptions import SpotifyException
 
 import config
 from forms import AddSongToQueueForm
+from lib.credentials_manager import CredentialsManager
 
 
 app_logger = logging.FileHandler(filename='app.log')
@@ -66,13 +66,9 @@ def auth():
     if session_state and secrets.compare_digest(request_state, session_state):
         code = request.args.get('code')
         data = spotify_client.get_access_and_refresh_tokens(code, config.SPOTIFY_REDIRECT_URI)
+        data.update({'last_refreshed': datetime.now().isoformat()})
 
-        data.update({
-            'last_refreshed': datetime.now().isoformat()
-        })
-
-        with open(config.SPOTIFY_CREDENTIALS_FILE, 'w') as fp:
-            json.dump(data, fp)
+        CredentialsManager.update_credentials_file(data)
 
         return redirect(url_for('add'))
     else:
@@ -87,9 +83,7 @@ def add():
         return render_template('add.html', form=form)
     elif request.method == 'POST' and form.validate_on_submit():
         uri = form.uri.data
-
-        with open(config.SPOTIFY_CREDENTIALS_FILE) as fp:
-            creds = json.load(fp)
+        creds = CredentialsManager.read_credentials_file()
 
         last_refreshed = datetime.strptime(creds['last_refreshed'], "%Y-%m-%dT%H:%M:%S.%f")
 
@@ -102,8 +96,7 @@ def add():
                 'last_refreshed': datetime.now().isoformat()
             })
 
-            with open(config.SPOTIFY_CREDENTIALS_FILE, 'w') as fp:
-                json.dump(creds, fp)
+            CredentialsManager.update_credentials_file(creds)
 
         try:
             spotify_client.add_track_to_user_queue(creds['access_token'], uri)
