@@ -85,7 +85,7 @@ def add():
 
     if request.method == 'GET':
         return render_template('add.html', form=form)
-    elif request.method == 'POST':
+    elif request.method == 'POST' and form.validate_on_submit():
         uri = form.uri.data
 
         with open(config.SPOTIFY_CREDENTIALS_FILE) as fp:
