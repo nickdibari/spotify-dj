@@ -4,4 +4,4 @@ from wtforms.validators import DataRequired
 
 
 class AddSongToQueueForm(FlaskForm):
-    uri = StringField('uri', validators=[DataRequired()])
+    link = StringField('link', validators=[DataRequired()])

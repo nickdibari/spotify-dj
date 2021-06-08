@@ -12,7 +12,7 @@
         {% endwith %}
         <form method="POST" action="/add">
             {{ form.csrf_token }}
-            {{ form.uri.label }} {{ form.uri(size=20) }}
+            {{ form.link.label }} {{ form.link(size=20) }}
             <input type="submit" value="Go">
         </form>
     </body>

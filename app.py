@@ -1,6 +1,7 @@
 import logging
 import secrets
 from datetime import datetime, timedelta
+from urllib.parse import urlsplit
 
 from flask import Flask, flash, redirect, render_template, Response, request, session, url_for
 from flask_wtf.csrf import CSRFProtect
@@ -82,7 +83,10 @@ def add():
     if request.method == 'GET':
         return render_template('add.html', form=form)
     elif request.method == 'POST' and form.validate_on_submit():
-        uri = form.uri.data
+        link = form.link.data
+        url_scheme = urlsplit(link)
+        uri = f"spotify:track:{url_scheme.path.split('/')[-1]}"
+
         creds = CredentialsManager.read_credentials_file()
 
         last_refreshed = datetime.strptime(creds['last_refreshed'], "%Y-%m-%dT%H:%M:%S.%f")
