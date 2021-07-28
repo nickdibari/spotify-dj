@@ -1,3 +1,4 @@
+import json
 import logging
 import secrets
 from datetime import datetime, timedelta
@@ -10,7 +11,7 @@ from spotify_client import Config, SpotifyClient
 from spotify_client.exceptions import SpotifyException
 
 import config
-from forms import AddSongToQueueForm
+from forms import AddSongToQueueForm, SearchForm
 from lib.credentials_manager import CredentialsManager
 
 
@@ -71,18 +72,40 @@ def auth():
 
         CredentialsManager.update_credentials_file(data)
 
-        return redirect(url_for('add'))
+        return redirect(url_for('search'))
     else:
         return Response('Invalid state parameter', status=400)
+
+
+@app.route('/search', methods=['GET', 'POST'])
+def search():
+    form = SearchForm()
+
+    if request.method == 'GET':
+        return render_template('search.html', form=form)
+    elif request.method == 'POST' and form.validate_on_submit():
+        term = form.term.data
+
+        try:
+            results = spotify_client.search(term, 'track', limit=10)
+
+            data = []
+            for result in results['tracks']['items']:
+                data.append({
+                    'id': result['id']
+                })
+
+            return render_template('search.html', form=form, results=data)
+        except SpotifyException:
+            flash('Error searching for songs! Please let the host know.')
+            return redirect(url_for('search'))
 
 
 @app.route('/add', methods=['GET', 'POST'])
 def add():
     form = AddSongToQueueForm()
 
-    if request.method == 'GET':
-        return render_template('add.html', form=form)
-    elif request.method == 'POST' and form.validate_on_submit():
+    if request.method == 'POST' and form.validate_on_submit():
         link = form.link.data
         url_scheme = urlsplit(link)
         uri = f"spotify:track:{url_scheme.path.split('/')[-1]}"

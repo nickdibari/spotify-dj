@@ -1,0 +1,22 @@
+<html lang="en">
+    <body>
+        <h1>Add Song To Queue</h1>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <ul class=flashes>
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+        <form method="POST" action="/search">
+            {{ form.csrf_token }}
+            {{ form.term.label }} {{ form.term(size=40) }}
+            <input type="submit" value="Go">
+        </form>
+        {% for result in results %}
+            <iframe allow="encrypted-media https://open.spotify.com;" src="https://open.spotify.com/embed/track/{{ result.id }}"></iframe>
+        {% endfor %}
+    </body>
+</html>
